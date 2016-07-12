@@ -3,31 +3,56 @@
  * Each "card" has a suit, number within the suit, face, and card # (of 52) */
 
 
-object cardmaker {
-
-        def main(args: Array[String]) {
-val face = List("A","2","3","4","5","6","7","8","9","10","J","Q","K")
-val suits = List("club", "spade", "diamond", "heart")
-
-var f: String = ""
-var s: String = ""
-var count: Int = 0
-var crd_tmp = List(List("temp",0,"temp",0))
-var one_card = crd_tmp(0)
-var current_card = crd_tmp.drop(0)
+object cardexperiments {
 
 
-for (i <- 0 to 3){
-  s = suits(i)
-    for (j <- 0 to 12) {
-      count = count + 1
-      f = face(j)
-      current_card = current_card ::: List(List(suits(i),j+1,f,count))
-      one_card = current_card(count)
-      println (s"${one_card(2)} of ${one_card(0)} is card number ${one_card(3)} number ${one_card(1)} of the suit")
+	def cardmaker (): List[List[Any]] = {
+		val face = List("A","2","3","4","5","6","7","8","9","10","J","Q","K")
+		val suits = List("club", "spade", "diamond", "heart")
+
+		var f: String = ""
+		var s: String = ""
+		var count: Int = 0
+		var crd_tmp = List(List("temp",0,"temp",0))
+		var one_card = crd_tmp(0)
+		var current_card = crd_tmp.drop(0)
+
+
+		for (i <- 0 to 3){
+  		s = suits(i)
+    	for (j <- 0 to 12) {
+      	count = count + 1
+      	f = face(j)
+      	current_card = current_card ::: List(List(suits(i),j+1,f,count))
+      	one_card = current_card(count)
+			}
+		}
+
+current_card
+	}
+  //List of List containing each card is available for play
+	def deck = cardmaker.tail //have to ditch that empty first "card"
+	
+  val select = scala.util.Random //tool to ramdomly select
+  //start with an empty hand
+	def playerhand: List[Int] = List()
+	
+//this works but I can make the code more elegant
+//fix it 7.12
+
+  def deal(hand: List[Int], acc: Int) : List[Int] = {
+ 		def roughHand(gh: List[Int], a: Int) : List [Int] = {
+  		if (a == 0) gh
+     	else roughHand(gh ::: select.nextInt(51) :: Nil, a - 1)
     }
+		roughHand(hand,acc)
+		 var CHM =  roughHand(hand,acc) //CHM for "Could have multiples"
+			if (CHM.distinct.length != acc) roughHand(CHM.distinct,(CHM.distinct.length - acc).abs)
+  		else CHM
 }
 
+            
 
-}
+ 
+  var randohand = deal(playerhand,7)
 }
