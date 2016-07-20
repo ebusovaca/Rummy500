@@ -320,7 +320,7 @@ object objexpmt extends App{
          ghost.clearhand
           }       
         else {
-          println("that selection is not a flush or straight with the point pile")
+          println("that selection is not a 3card flush or straight")
           ghost.clearhand
           player.Play2Dscrd(discardpile)
         }
