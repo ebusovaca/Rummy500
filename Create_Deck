@@ -1,10 +1,12 @@
 /* Creates an ordered deck of cards in the form of a list of 52 items
- * Each Item of the list is a "card" which is a list of 4 items
- * Each "card" has a suit, number within the suit, face, and card # (of 52) */
+ * Player is dealt 7 cards
+ * Cards can be played if 3 of a kind or a run of 3 cards.
+ * Player can choose to be dealt a random card or pull from the discard pile
+ ****************************************************************************/
 
 
 import scala.collection.mutable.ListBuffer
-import scala.io.StdIn.{readLine, readInt}
+
 
 class card(a: String, b: Int, c: String, d: Int){
 
