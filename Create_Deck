@@ -1,25 +1,17 @@
 import scala.collection.mutable.ListBuffer
 
 
-class card(a: String, b: Int, c: String, d: Int){
-
-  def suit = a
-  def suitnum = b
-  def face = c
-  def decknum = d
+class card(val suit: String, val suitnum: Int, val face: String, val decknum: Int){
 
 def display = face + " of " + suit + "s"  
-
 
 }
 
 
 
-class HAND(cards: ListBuffer[card]){
+class HAND(var deck: ListBuffer[card]){
 	val select = scala.util.Random
-	def deck = cards
 	var decklist: ListBuffer[Int] = ListBuffer()
-	
 	var clist: ListBuffer[Int] = ListBuffer()
 	var dlist: ListBuffer[Int] = ListBuffer()
 	var hlist: ListBuffer[Int] = ListBuffer()
