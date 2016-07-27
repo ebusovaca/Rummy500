@@ -1,10 +1,3 @@
-/* Creates an ordered deck of cards in the form of a list of 52 items
- * Player is dealt 7 cards
- * Cards can be played if 3 of a kind or a run of 3 cards.
- * Player can choose to be dealt a random card or pull from the discard pile
- ****************************************************************************/
-
-
 import scala.collection.mutable.ListBuffer
 
 
@@ -176,7 +169,6 @@ object objexpmt extends App{
 				var currentcard = new card(suits(i),j+1,f,count)
       	deck_in_prog = deck_in_prog += currentcard
       	count = count + 1
-      	
 			}
 		}
 		
@@ -287,13 +279,13 @@ object objexpmt extends App{
     var bottomcard = scala.io.StdIn.readInt() 
     
     player.copyhand(ghost, List.range(0,player.deck.length))
-    discardpile copyhand (ghost,List(bottomcard))
+    discardpile copyhand (ghost,List.range(bottomcard,discardpile.deck.length))
     
     if (ghost.playopt){
       discardpile.cardIDs
       var dscrdrange = List.range(bottomcard,discardpile.deck.length)
       var transferIDS = dscrdrange.map( x => discardpile.decklist(x))
-      for (a <- bottomcard to (discardpile.deck.length -1)) { 
+      for (a <- 0 to (transferIDS.length -1)) { 
            discardpile.cardIDs          
            discardpile.disCARD(player,discardpile.decklist.indexOf(transferIDS(a)))
          }
