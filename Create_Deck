@@ -171,10 +171,11 @@ object objexpmt extends App{
 		for (i <- 0 to (suits.length -1)){
   		s = suits(i)
     	for (j <- 0 to (face.length - 1)) {
-      	count = count + 1
+      	
       	f = face(j)
 				var currentcard = new card(suits(i),j+1,f,count)
       	deck_in_prog = deck_in_prog += currentcard
+      	count = count + 1
       	
 			}
 		}
