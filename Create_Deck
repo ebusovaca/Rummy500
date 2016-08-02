@@ -58,8 +58,8 @@ class HAND(var deck: ListBuffer[card]){
     minilists
   	if ((cnt == minilist.length - 2) || (minilist.length < 3)) false
   	else if ( (minilist(cnt)+1 == minilist(cnt+1))  && (minilist(cnt)+2 == minilist(cnt+2))  ) true
-  	else if ( (minilist(minilist.length-1) + 1 == minilist(0) ) && (minilist(minilist.length-1) + 2 == minilist(1)) ) true
-  	else if ( (minilist(minilist.length-2) + 1 == minilist(minilist.length-1) ) && (minilist(minilist.length-2) + 2 == minilist(0)) ) true
+    else if ((minilist(0) == 1) && (minilist(1) == 2) && minilist(minilist.length-1) == 13) true 
+    else if ( (minilist(0) == 1) && (minilist(minilist.length - 2) == 12) && minilist(minilist.length-1) == 13) true
   	else flushfinder(minilist, cnt + 1)
   }
   
