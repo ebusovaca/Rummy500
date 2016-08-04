@@ -1,13 +1,9 @@
 import scala.collection.mutable.ListBuffer
 
 
-class card(val suit: String, val suitnum: Int, val face: String, val decknum: Int){
-
+class card(val suit : String, val suitnum: Int, val face: String, val decknum: Int){
 def display = face + " of " + suit + "s"  
-
 }
-
-
 
 class HAND(var deck: ListBuffer[card]){
 	val select = scala.util.Random
@@ -53,7 +49,7 @@ class HAND(var deck: ListBuffer[card]){
 	    }
 	   }
 	}
-	
+
   def flushfinder( minilist: ListBuffer[Int], cnt: Int): Boolean = {
     minilists
   	if ((cnt == minilist.length - 2) || (minilist.length < 3)) false
@@ -132,6 +128,38 @@ class HAND(var deck: ListBuffer[card]){
           }    
     
   }
+  def play2Point (ghost: HAND,pointpile: HAND) ={
+        println("Please list the cards you would like to play using a comma delimited list like this:")
+        println("x,y,z")
+        
+        var playlist = scala.io.StdIn.readLine().split(",").map(_.toInt).toList
+        
+        while ( (playlist.max >= this.deck.length) || (playlist.min < 0))  {
+          println(s"please choose between 0 and ${this.deck.length-1}" )
+          playlist = scala.io.StdIn.readLine().split(",").map(_.toInt).toList
+        }
+        
+        if (ghost.deck.length > 0) ghost.clearhand
+        this.copyhand(ghost, playlist) 
+               
+        if (ghost.playopt) {  //sufficient but strict enough to be necessary
+          var crdval2mv = List[Int]()
+          this.cardIDs      
+          crdval2mv = playlist.map( x => this.decklist(x)) 
+          //above finds the deckID of each of the player's hands
+          
+         for (a <- 0 to (playlist.length -1)) {         
+           this.cardIDs          
+           this.disCARD(pointpile,this.decklist.indexOf(crdval2mv(a)))  //and delete these cards using remove
+         } // finds the INDEX of the selected card's VALUE ^^^^^^^^^^^^^^       
+         ghost.clearhand
+          }       
+        else {
+          println("that selection is not a flush or straight with the point pile")
+          ghost.clearhand
+        }
+           
+  }
   
 }
 
@@ -173,13 +201,13 @@ object objexpmt extends App{
   var game = new HAND(cardmaker()) // Game begins with all cards in this HAND     
   var player = new HAND(ListBuffer[card]())       
 	var discardpile = new HAND(ListBuffer[card]())
-	var pointpile = new HAND(ListBuffer[card]())
+	var pointpile = new HAND(ListBuffer[card]()) // change to pointCond
   var ghost = new HAND(ListBuffer[card]())
                                                  
 /**********************Deal the Player in***************************/	
   
   game.GiveRandomCARD(discardpile)
-	for (i <- 1 to 7) game.GiveRandomCARD(player)
+	for (i <- 1 to 25) game.GiveRandomCARD(player)
   game.reorder
 	
   println("Discard pile contains: ")
@@ -214,37 +242,10 @@ object objexpmt extends App{
     if  (player.playopt){  
     println("Would you like to play cards in your hand?")
       if (scala.io.StdIn.readBoolean()) {
-        println("Please list the cards you would like to play using a comma delimited list like this:")
-        println("x,y,z")
-        
-        var playlist = scala.io.StdIn.readLine().split(",").map(_.toInt).toList
-        
-        if (ghost.deck.length > 0) ghost.clearhand
-        //if (pointpile.deck.length > 0) pointpile.copyhand(ghost,List.range(0,pointpile.deck.length))
-        player.copyhand(ghost, playlist) 
-               
-        if (ghost.playopt) {// move these cards from the game to the pointpile        
-          var crdval2mv = List[Int]()
-          player.cardIDs                //just be sure player.decklist has an updated list
-          crdval2mv = playlist.map( x => player.decklist(x)) 
-          //above finds the deckID of each of the player's hands
-          
-         for (a <- 0 to (playlist.length -1)) { 
-           player.cardIDs          
-           player.disCARD(pointpile,player.decklist.indexOf(crdval2mv(a)))
-         } // finds the INDEX of the selected card's VALUE ^^^^^^^^^^^^^^       
-         ghost.clearhand
-          }       
-        else {
-          println("that selection is not a flush or straight with the point pile")
-          ghost.clearhand
-        }
-     
-      player.Play2Dscrd(discardpile)
-      } else {player Play2Dscrd discardpile}
-            
-      }
-    else {player Play2Dscrd discardpile} 
+        player.play2Point(ghost,pointpile)
+      } 
+    }
+    player Play2Dscrd discardpile 
     } 
     
     override def toString = "1 - Draw from Deck"    
@@ -285,31 +286,7 @@ object objexpmt extends App{
       println("Player hand now contains:")
       player.printhand
         
-      println("Please list the cards you would like to play using a comma delimited list like this:")
-      println("x,y,z")
-      var playlist = scala.io.StdIn.readLine().split(",").map(_.toInt).toList
-      if (ghost.deck.length > 0) ghost.clearhand
-        //if (pointpile.deck.length > 0) pointpile.copyhand(ghost,List.range(0,pointpile.deck.length))
-        player.copyhand(ghost, playlist) 
-               
-        if (ghost.playopt) {// move these cards from the game to the pointpile        
-          var crdval2mv = List[Int]()
-          player.cardIDs                //just be sure player.decklist has an updated list
-          crdval2mv = playlist.map( x => player.decklist(x)) 
-          //above finds the deckID of each of the player's hands
-          
-         for (a <- 0 to (playlist.length -1)) { 
-           player.cardIDs          
-           player.disCARD(pointpile,player.decklist.indexOf(crdval2mv(a)))
-         } // finds the INDEX of the selected card's VALUE ^^^^^^^^^^^^^^       
-         ghost.clearhand
-          }       
-        else {
-          println("that selection is not a 3card flush or straight")
-          ghost.clearhand
-          player.Play2Dscrd(discardpile)
-        }
-     
+      player.play2Point (ghost,pointpile)
       player.Play2Dscrd(discardpile)
     }
     else{
