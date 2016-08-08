@@ -13,7 +13,6 @@ class HAND(var deck: ListBuffer[card]){
 	var hlist: ListBuffer[Int] = ListBuffer()
 	var slist: ListBuffer[Int] = ListBuffer()
 	
-	
 	def cardIDs  = {
 		decklist.remove(0,decklist.length) //first clear if anything is in there
 		for (i <- 0 to (deck.length -1)){
@@ -41,7 +40,7 @@ class HAND(var deck: ListBuffer[card]){
 	  
 	   for (i <- 0 to (deck.length -1)){
 	    
-	    deck(i).suit match {  //copy this over
+	    deck(i).suit match {  
 	      case "club" => clist = clist += (deck(i).suitnum)
 	      case "diamond" => dlist = dlist += (deck(i).suitnum)
 	      case "heart" => hlist = hlist += (deck(i).suitnum)
@@ -75,12 +74,19 @@ class HAND(var deck: ListBuffer[card]){
   }  
     
       
-	def playopt = {
+	def playopt : Boolean = {
 	  if (runkiller || flushfinder(clist,0) || flushfinder(dlist,0) || flushfinder(hlist,0) 
 	      || flushfinder(slist,0) ) true 
 	  else false
 	}
-  	
+	
+	/**********************************
+	def playnec : Boolean = {
+	  minilists
+	  if ( runkiller && deck.length <= 4 ) deck.forall(_.suitnum == deck(0).suitnum)
+	  else true // I dont know about this. . .
+	}
+  	********************************/
   def printhand = {
     var (displaystring: List[String]) = List[String]("|")
     for (i <- 0 to (deck.length - 1)) {
@@ -94,8 +100,6 @@ class HAND(var deck: ListBuffer[card]){
   def disCARD(that: HAND, crd: Int) = {
     that.deck += this.deck(crd)
     this.deck.remove(crd)
-    //this.reorder   // we don't need these now that we check for playable cards every time
-    //that.cardIDs
   }
   
   def GiveRandomCARD (that: HAND) = {
@@ -104,14 +108,11 @@ class HAND(var deck: ListBuffer[card]){
     
   }
   
-    def copyhand(that:HAND, start: List[Int]) = {
+  def copyover(that:HAND, start: List[Int]) = {
     for (i <- 0 to (start.length -1)) that.deck += this.deck(start(i))
   }
   
-  
   def clearhand = deck.remove(0,deck.length)
- 
-  
  
   def Play2Dscrd (that:HAND)= {
    
@@ -126,41 +127,36 @@ class HAND(var deck: ListBuffer[card]){
       this.printhand
       selection = scala.io.StdIn.readInt()
           }    
-    
-  }
-  def play2Point (ghost: HAND,pointpile: HAND) ={
-        println("Please list the cards you would like to play using a comma delimited list like this:")
-        println("x,y,z")
-        
-        var playlist = scala.io.StdIn.readLine().split(",").map(_.toInt).toList
-        
-        while ( (playlist.max >= this.deck.length) || (playlist.min < 0))  {
-          println(s"please choose between 0 and ${this.deck.length-1}" )
-          playlist = scala.io.StdIn.readLine().split(",").map(_.toInt).toList
-        }
-        
-        if (ghost.deck.length > 0) ghost.clearhand
-        this.copyhand(ghost, playlist) 
-               
-        if (ghost.playopt) {  //sufficient but strict enough to be necessary
-          var crdval2mv = List[Int]()
-          this.cardIDs      
-          crdval2mv = playlist.map( x => this.decklist(x)) 
-          //above finds the deckID of each of the player's hands
-          
-         for (a <- 0 to (playlist.length -1)) {         
-           this.cardIDs          
-           this.disCARD(pointpile,this.decklist.indexOf(crdval2mv(a)))  //and delete these cards using remove
-         } // finds the INDEX of the selected card's VALUE ^^^^^^^^^^^^^^       
-         ghost.clearhand
-          }       
-        else {
-          println("that selection is not a flush or straight with the point pile")
-          ghost.clearhand
-        }
-           
   }
   
+  def test (list: List[HAND]) : Boolean = {
+    if (list.isEmpty) false
+    else{
+      this.minilists
+      list.head.minilists
+      if (list.head.runkiller) {
+        (this.clist ++= this.dlist ++= this.hlist ++= 
+          this.slist).exists(x => x == list(0).deck(0).suitnum) || 
+          this.test(list.tail)
+      }
+      else list.head.deck(0).suit match {
+        case "club" => runMatch(list.head.clist, this.clist) || this.test(list.tail)
+        case "diamond" => runMatch(list.head.dlist, this.dlist) || this.test(list.tail)
+        case "heart" => runMatch(list.head.hlist, this.hlist) || this.test(list.tail)
+        case "spade" => runMatch(list.head.slist, this.slist) || this.test(list.tail)
+      }
+    }
+  }
+  
+ def runMatch (minilistTHAT: ListBuffer[Int], minilistTHIS: ListBuffer[Int]) : Boolean =  {
+    ( minilistTHIS.exists(x => x == minilistTHAT.min -2) && minilistTHIS.exists(x => (x == minilistTHAT.min-1))) || 
+    minilistTHIS.exists(x => x == minilistTHAT.min-1) || minilistTHIS.exists(x => x == minilistTHAT.max+1)  || 
+    (minilistTHIS.exists(x=> x == minilistTHAT.max+2) && minilistTHIS.exists(x=> x == minilistTHAT.max+1) ) ||
+    ((minilistTHAT.min == 1 && minilistTHIS.exists(x => x == 13) && minilistTHIS.exists(x => x == 12) ) ||
+    (minilistTHAT.min == 1 && minilistTHIS.exists(x=> x == 13)) ) ||
+    (minilistTHAT.min == 1 && minilistTHIS.exists(x => x == 13) && minilistTHIS.exists(x => x == 2) )
+  }
+ 
 }
 
 
@@ -201,13 +197,14 @@ object objexpmt extends App{
   var game = new HAND(cardmaker()) // Game begins with all cards in this HAND     
   var player = new HAND(ListBuffer[card]())       
 	var discardpile = new HAND(ListBuffer[card]())
-	var pointpile = new HAND(ListBuffer[card]()) // change to pointCond
+  //var pointpile =  new HAND(ListBuffer[card]()) 
   var ghost = new HAND(ListBuffer[card]())
-                                                 
+  var pointlist = List(new HAND(ListBuffer[card]()))
+  
 /**********************Deal the Player in***************************/	
   
   game.GiveRandomCARD(discardpile)
-	for (i <- 1 to 25) game.GiveRandomCARD(player)
+	for (i <- 1 to 7) game.GiveRandomCARD(player)
   game.reorder
 	
   println("Discard pile contains: ")
@@ -233,16 +230,45 @@ object objexpmt extends App{
     discardpile.printhand 
     println("Now Player hand contains: ")
     player.printhand
-    if (pointpile.deck.length > 0) {
+    if (pointlist(0).deck.length > 0) {
       println("pointpile contains: ")
-      pointpile.printhand 
+      pointlist.map(x => x.printhand) 
     }
     
     
     if  (player.playopt){  
     println("Would you like to play cards in your hand?")
       if (scala.io.StdIn.readBoolean()) {
-        player.play2Point(ghost,pointpile)
+              println("Please list the cards you would like to play using a comma delimited list like this:")
+        println("x,y,z")
+        
+        var playlist = scala.io.StdIn.readLine().split(",").map(_.toInt).toList
+        
+        while ( (playlist.max >= player.deck.length) || (playlist.min < 0))  {
+          println(s"please choose between 0 and ${player.deck.length-1}" )
+          playlist = scala.io.StdIn.readLine().split(",").map(_.toInt).toList
+        }
+        
+        if (ghost.deck.length > 0) ghost.clearhand
+        player.copyover(ghost, playlist) 
+               
+        if (ghost.playopt|| ghost.test(pointlist) ) {  //sufficient but strict enough to be necessary
+          if (pointlist.length != 1 ) pointlist ++= List(new HAND(ListBuffer[card]()))
+          var crdval2mv = List[Int]()
+          player.cardIDs      
+          crdval2mv = playlist.map( x => player.decklist(x)) 
+          //above finds the deckID of each of the player's hands
+          
+         for (a <- 0 to (playlist.length -1)) {         
+           player.cardIDs          
+           player.disCARD(pointlist(pointlist.length -1),player.decklist.indexOf(crdval2mv(a)))  //and delete these cards using remove
+         } // finds the INDEX of the selected card's VALUE ^^^^^^^^^^^^^^       
+         ghost.clearhand
+          }       
+        else {
+          println("that selection is not a flush or straight with the point pile")
+          ghost.clearhand
+        }
       } 
     }
     player Play2Dscrd discardpile 
@@ -260,9 +286,9 @@ object objexpmt extends App{
     player.printhand
     println("Discard pile contains: ")
     discardpile.printhand
-    if (pointpile.deck.length > 0) {
+    if (pointlist(0).deck.length > 0) {
       println("pointpile contains: ")
-      pointpile.printhand 
+      pointlist.map(x => x.printhand) 
     }
     
     if (ghost.deck.length > 0) ghost.clearhand //prep ghost hand
@@ -271,10 +297,10 @@ object objexpmt extends App{
     println("Leftmost card is beneath the cards to the right of it")
     var bottomcard = scala.io.StdIn.readInt() 
     
-    player.copyhand(ghost, List.range(0,player.deck.length))
-    discardpile copyhand (ghost,List.range(bottomcard,discardpile.deck.length))
+    player.copyover(ghost, List.range(0,player.deck.length))
+    discardpile copyover (ghost,List.range(bottomcard,discardpile.deck.length))
     
-    if (ghost.playopt){
+    if (ghost.playopt || ghost.test(pointlist)){
       discardpile.cardIDs
       var dscrdrange = List.range(bottomcard,discardpile.deck.length)
       var transferIDS = dscrdrange.map( x => discardpile.decklist(x))
@@ -282,15 +308,58 @@ object objexpmt extends App{
            discardpile.cardIDs          
            discardpile.disCARD(player,discardpile.decklist.indexOf(transferIDS(a)))
          }
+      bottomcard = transferIDS(0)
       player.reorder
+      player.cardIDs
       println("Player hand now contains:")
       player.printhand
+      
+      println("Please list the cards you would like to play using a comma delimited list like this:")
+      println("x,y,z")
+      var playlist = scala.io.StdIn.readLine().split(",").map(_.toInt).toList
         
-      player.play2Point (ghost,pointpile)
+        while ( (playlist.max >= player.deck.length) || (playlist.min < 0))  {
+          println(s"please choose between 0 and ${player.deck.length-1}" )
+          playlist = scala.io.StdIn.readLine().split(",").map(_.toInt).toList
+        }
+        
+        player.copyover(ghost, playlist) 
+        ghost.cardIDs
+        
+        while ( !ghost.decklist.exists( x => x == bottomcard))   {
+          ghost.clearhand
+          println("The bottom card you selected must be put into play, it was:" )
+          print(player.deck(player.decklist.indexOf(bottomcard)).display +"\n")
+          println("Please list the cards you would like to play using a comma delimited list like this:")
+          println("x,y,z")
+          println("Make sure to include card #" + player.decklist.indexOf(bottomcard))
+          playlist = scala.io.StdIn.readLine().split(",").map(_.toInt).toList
+          player.copyover(ghost, playlist) 
+          ghost.cardIDs    
+        }
+        
+          if (ghost.playopt || ghost.test(pointlist)) {  //sufficient but not strict enough to be necessary
+          
+          if (pointlist.length != 1 ) pointlist ++= List(new HAND(ListBuffer[card]())) // can't pass to a method. . .
+          
+          var crdval2mv = List[Int]()
+          player.cardIDs      
+          crdval2mv = playlist.map( x => player.decklist(x)) 
+          //above finds the deckID of each of the player's hands
+          
+         for (a <- 0 to (playlist.length -1)) {         
+           player.cardIDs          
+           player.disCARD(pointlist(pointlist.length -1),player.decklist.indexOf(crdval2mv(a)))  //and delete these cards using remove
+         } // finds the INDEX of the selected card's VALUE ^^^^^^^^^^^^^^       
+         ghost.clearhand
+          }       
+        else {
+          println("that selection is not a flush or straight with the point pile")
+          ghost.clearhand
+        }
       player.Play2Dscrd(discardpile)
     }
     else{
-    println("The bottom card must be put into play")
     println("The card you chose isn't valid")
     }
     
@@ -306,12 +375,15 @@ object objexpmt extends App{
     override def toString = "3 - Quit"
     
   }
-  while (keepsorting) { 
+  while (keepsorting) {
+    
   def Menu = "\nPlease select one of the following:\n" + 
                 Seq(DrawFrmDeck, DrawFromDiscard, Quit).mkString(" | ")
 
-                
-  if (player.deck.length <= 0) { println("round over")}
+  if (player.deck.length <= 0 || game.deck.length < 1) { println("round over")
+    keepsorting = false
+    }              
+  
   else {
     
     println(Menu)
