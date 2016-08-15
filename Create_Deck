@@ -14,15 +14,15 @@ class HAND(var deck: ListBuffer[card]){
 	var slist: ListBuffer[Int] = ListBuffer()
 	
 	def cardIDs  = {
-		decklist.remove(0,decklist.length) //first clear if anything is in there
-		for (i <- 0 to (deck.length -1)){
+	 decklist.remove(0,decklist.length) //first clear if anything is in there
+		for (i <- 0 until deck.length ){
   	decklist = decklist += (deck(i).decknum)
   	}
   }
 	
 	def reorder = {
     cardIDs
-    for (i <- 0 to (deck.length -1)){
+    for (i <- 0 until deck.length){
       var sortdeck = decklist.sorted
       var crd: Int = sortdeck(i)
       this.deck += this.deck(decklist.indexOf(crd)) 
@@ -38,7 +38,7 @@ class HAND(var deck: ListBuffer[card]){
 	  hlist.remove(0,hlist.length)
 	  slist.remove(0,slist.length)
 	  
-	   for (i <- 0 to (deck.length -1)){
+	   for (i <- 0 until deck.length){
 	    
 	    deck(i).suit match {  
 	      case "club" => clist = clist += (deck(i).suitnum)
@@ -46,50 +46,38 @@ class HAND(var deck: ListBuffer[card]){
 	      case "heart" => hlist = hlist += (deck(i).suitnum)
 	      case "spade" => slist = slist += (deck(i).suitnum)  
 	    }
-	   }
-	}
+	   } 
+	  
+	  
+	 }
 
   def flushfinder( minilist: ListBuffer[Int], cnt: Int): Boolean = {
     minilists
-  	if ((cnt == minilist.length - 2) || (minilist.length < 3)) false
+    if ((cnt == minilist.length - 2) || (minilist.length < 3)) false
   	else if ( (minilist(cnt)+1 == minilist(cnt+1))  && (minilist(cnt)+2 == minilist(cnt+2))  ) true
     else if ((minilist(0) == 1) && (minilist(1) == 2) && minilist(minilist.length-1) == 13) true 
     else if ( (minilist(0) == 1) && (minilist(minilist.length - 2) == 12) && minilist(minilist.length-1) == 13) true
   	else flushfinder(minilist, cnt + 1)
   }
-  
+   
  def runkiller : Boolean = { 
     minilists
     var multiples = clist ++ dlist ++ hlist ++ slist
-    var ofakind = multiples.diff(multiples.distinct).distinct
-    if (ofakind.isEmpty) false
-    else {
-    def loop(cnt: Int) : Boolean = 
-      if (cnt < 0) false
-      else if (multiples.count(_ == ofakind(cnt)) > 2) true
-      else loop(cnt -1)
+    (multiples.groupBy(x => x)map{case (dnum,count) => (dnum,count.length)}).toList.exists(_._2 > 2)
     
-    loop(ofakind.length-1)
-    }
   }  
     
       
 	def playopt : Boolean = {
+	  minilists
 	  if (runkiller || flushfinder(clist,0) || flushfinder(dlist,0) || flushfinder(hlist,0) 
 	      || flushfinder(slist,0) ) true 
 	  else false
 	}
 	
-	/**********************************
-	def playnec : Boolean = {
-	  minilists
-	  if ( runkiller && deck.length <= 4 ) deck.forall(_.suitnum == deck(0).suitnum)
-	  else true // I dont know about this. . .
-	}
-  	********************************/
-  def printhand = {
-    var (displaystring: List[String]) = List[String]("|")
-    for (i <- 0 to (deck.length - 1)) {
+	def printhand = {
+    var displaystring: List[String] = List[String]("|")
+    for (i <- 0 until deck.length) {
       displaystring = displaystring :::  i.toString + ":" :: deck(i).display :: " | " :: Nil 
     }
   
@@ -109,7 +97,7 @@ class HAND(var deck: ListBuffer[card]){
   }
   
   def copyover(that:HAND, start: List[Int]) = {
-    for (i <- 0 to (start.length -1)) that.deck += this.deck(start(i))
+    for (i <- 0 until start.length) that.deck += this.deck(start(i))
   }
   
   def clearhand = deck.remove(0,deck.length)
@@ -130,11 +118,11 @@ class HAND(var deck: ListBuffer[card]){
   }
   
   def test (list: List[HAND]) : Boolean = {
-    if (list.isEmpty) false
+    if (list.isEmpty  || (list.length == 1 && list(0).deck.isEmpty )) false
     else{
       this.minilists
       list.head.minilists
-      if (list.head.runkiller) {
+      if (list.head.runkiller) { //runkillers all have the same suitnum
         (this.clist ++= this.dlist ++= this.hlist ++= 
           this.slist).exists(x => x == list(0).deck(0).suitnum) || 
           this.test(list.tail)
@@ -153,6 +141,7 @@ class HAND(var deck: ListBuffer[card]){
     minilistTHIS.exists(x => x == minilistTHAT.min-1) || minilistTHIS.exists(x => x == minilistTHAT.max+1)  || 
     (minilistTHIS.exists(x=> x == minilistTHAT.max+2) && minilistTHIS.exists(x=> x == minilistTHAT.max+1) ) ||
     ((minilistTHAT.min == 1 && minilistTHIS.exists(x => x == 13) && minilistTHIS.exists(x => x == 12) ) ||
+     (minilistTHAT.max == 13 && minilistTHAT.exists(x => x == 12) && minilistTHIS.exists(x => x == 11) ) ||
     (minilistTHAT.min == 1 && minilistTHIS.exists(x=> x == 13)) ) ||
     (minilistTHAT.min == 1 && minilistTHIS.exists(x => x == 13) && minilistTHIS.exists(x => x == 2) )
   }
@@ -170,25 +159,13 @@ object objexpmt extends App{
 	def cardmaker (): ListBuffer[card] = {
 		val face = List("2","3","4","5","6","7","8","9","10","J","Q","K","A")
 		val suits = List("club", "diamond", "heart", "spade" )
-		
-		var f: String = ""
-		var s: String = ""
-		var count: Int = 0
+		var count: Int = -1
 		var deck_in_prog = ListBuffer[card]()
 
-		
-		for (i <- 0 to (suits.length -1)){
-  		s = suits(i)
-    	for (j <- 0 to (face.length - 1)) {
-      	
-      	f = face(j)
-				var currentcard = new card(suits(i),j+1,f,count)
-      	deck_in_prog = deck_in_prog += currentcard
-      	count = count + 1
-			}
-		}
-		
-		deck_in_prog
+		for{ i <- suits ; j <- 0 until face.length } yield { count = count + 1
+				 deck_in_prog += new card(i,j+1,face(j),count)
+			  }
+	  deck_in_prog			 			
 	}                                        
 
 
@@ -197,7 +174,6 @@ object objexpmt extends App{
   var game = new HAND(cardmaker()) // Game begins with all cards in this HAND     
   var player = new HAND(ListBuffer[card]())       
 	var discardpile = new HAND(ListBuffer[card]())
-  //var pointpile =  new HAND(ListBuffer[card]()) 
   var ghost = new HAND(ListBuffer[card]())
   var pointlist = List(new HAND(ListBuffer[card]()))
   
@@ -211,7 +187,7 @@ object objexpmt extends App{
   discardpile.printhand 
   println("\nPlayer hand contains: ")
   player.printhand
-
+  //println(player.decklist)
   
   var keepsorting = true
   
@@ -236,7 +212,7 @@ object objexpmt extends App{
     }
     
     
-    if  (player.playopt){  
+    if  ( (player.playopt) || player.test(pointlist)){         
     println("Would you like to play cards in your hand?")
       if (scala.io.StdIn.readBoolean()) {
               println("Please list the cards you would like to play using a comma delimited list like this:")
@@ -259,10 +235,10 @@ object objexpmt extends App{
           crdval2mv = playlist.map( x => player.decklist(x)) 
           //above finds the deckID of each of the player's hands
           
-         for (a <- 0 to (playlist.length -1)) {         
+         for (a <- 0 until playlist.length) {         
            player.cardIDs          
            player.disCARD(pointlist(pointlist.length -1),player.decklist.indexOf(crdval2mv(a)))  //and delete these cards using remove
-         } // finds the INDEX of the selected card's VALUE ^^^^^^^^^^^^^^       
+         }                      // finds the INDEX of the selected card's VALUE ^^^^^^^^^^^^^^       
          ghost.clearhand
           }       
         else {
@@ -304,7 +280,7 @@ object objexpmt extends App{
       discardpile.cardIDs
       var dscrdrange = List.range(bottomcard,discardpile.deck.length)
       var transferIDS = dscrdrange.map( x => discardpile.decklist(x))
-      for (a <- 0 to (transferIDS.length -1)) { 
+      for (a <- 0 until transferIDS.length) { 
            discardpile.cardIDs          
            discardpile.disCARD(player,discardpile.decklist.indexOf(transferIDS(a)))
          }
@@ -338,7 +314,7 @@ object objexpmt extends App{
           ghost.cardIDs    
         }
         
-          if (ghost.playopt || ghost.test(pointlist)) {  //sufficient but not strict enough to be necessary
+          if (ghost.playopt || player.test(pointlist)) {  //sufficient but not strict enough to be necessary
           
           if (pointlist.length != 1 ) pointlist ++= List(new HAND(ListBuffer[card]())) // can't pass to a method. . .
           
@@ -347,7 +323,7 @@ object objexpmt extends App{
           crdval2mv = playlist.map( x => player.decklist(x)) 
           //above finds the deckID of each of the player's hands
           
-         for (a <- 0 to (playlist.length -1)) {         
+         for (a <- 0 until playlist.length) {         
            player.cardIDs          
            player.disCARD(pointlist(pointlist.length -1),player.decklist.indexOf(crdval2mv(a)))  //and delete these cards using remove
          } // finds the INDEX of the selected card's VALUE ^^^^^^^^^^^^^^       
