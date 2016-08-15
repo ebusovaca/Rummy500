@@ -1,2 +1,2 @@
-# Rummy500
-Scala object oriented coding exercise 
+# RummyStyleCardSort
+Scala object oriented coding exercise using mutable listbuffers 
