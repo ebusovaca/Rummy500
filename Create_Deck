@@ -180,14 +180,14 @@ object objexpmt extends App{
 /**********************Deal the Player in***************************/	
   
   game.GiveRandomCARD(discardpile)
-	for (i <- 1 to 7) game.GiveRandomCARD(player)
+  for (i <- 1 to 7) game.GiveRandomCARD(player)
   game.reorder
 	
   println("Discard pile contains: ")
   discardpile.printhand 
   println("\nPlayer hand contains: ")
   player.printhand
-  //println(player.decklist)
+  
   
   var keepsorting = true
   
